@@ -25,6 +25,6 @@ namespace GymManagementSystem.DAL.Models
     {
         public string Street { get; set; } = default!;
         public string City { get; set; } = default!;
-        public string BuildingNumber { get; set; } = default!;
+        public int BuildingNumber { get; set; } = default!;
     }
 }
