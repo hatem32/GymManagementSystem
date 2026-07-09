@@ -9,7 +9,7 @@ namespace GymManagementSystem.DAL.Models
 {
     public class Trainer : GymUser
     {
-        Specialty Specialty { get; set; }
+        public Specialty Specialty { get; set; }
 
         // HireDate = CreatedAt of BaseEntity
 

@@ -22,10 +22,9 @@ namespace GymManagementSystem.DAL.Repositories.Classes
             _dbContext = dbContext;
             _Set = dbContext.Set<TEntity>();
         }
-        public async Task<int> AddAsync(TEntity entity, CancellationToken ct = default)
+        public void Add(TEntity entity)
         {
             _Set.Add(entity);
-            return await _dbContext.SaveChangesAsync(ct);
         }
 
         public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> Predicate, CancellationToken ct = default)
@@ -33,16 +32,22 @@ namespace GymManagementSystem.DAL.Repositories.Classes
             return _Set.AsNoTracking().AnyAsync(Predicate, ct);
         }
 
-        public async Task<int> DeleteAsync(TEntity entity, CancellationToken ct = default)
+        public void Delete(TEntity entity)
         {
             _Set.Remove(entity);
-            return await _dbContext.SaveChangesAsync(ct);
+        }
+
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> Predicate, bool tracking = false, CancellationToken ct = default)
+        {
+            IQueryable<TEntity> query = tracking ? _Set : _Set.AsNoTracking();
+            return await query.FirstOrDefaultAsync(Predicate);
+
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync(bool tracking = false, CancellationToken ct = default)
         {
             IQueryable<TEntity> query = tracking ? _Set : _Set.AsNoTracking();
-            return await query.ToListAsync(ct);
+            return await query.ToListAsync();
         }
 
         public async Task<TEntity?> GetByIdAsync(int id, CancellationToken ct = default)
@@ -50,10 +55,9 @@ namespace GymManagementSystem.DAL.Repositories.Classes
             return await _Set.FindAsync(id, ct);
         }
 
-        public async Task<int> UpdateAsync(TEntity entity, CancellationToken ct = default)
+        public void Update(TEntity entity)
         {
             _Set.Update(entity);
-            return await _dbContext.SaveChangesAsync(ct);
         }
     }
 }
