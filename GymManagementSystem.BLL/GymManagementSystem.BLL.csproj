@@ -14,4 +14,8 @@
     <ProjectReference Include="..\GymManagementSystem.DAL\GymManagementSystem.DAL.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	
 </Project>

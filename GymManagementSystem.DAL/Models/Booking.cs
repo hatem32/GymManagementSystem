@@ -15,6 +15,6 @@ namespace GymManagementSystem.DAL.Models
         public int SessionId { get; set; }
 
         // BookingDate = CreatedAt of BaseEntity
-        public bool IsAttended { get; set; }
+        public bool IsAttended { get; set; } = false;
     }
 }

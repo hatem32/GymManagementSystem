@@ -49,7 +49,7 @@ namespace GymManagementSystem.BLL.Services.Classes
         public async Task<IEnumerable<SessionViewModel>?> GetAllSessionsAsync(CancellationToken ct = default)
         {
             var sessionRepo = _unitOfWork.SessionRepository;
-            var Sessions = await sessionRepo.GetAllSessionsWithTrainerAndCategoryAsync(ct);
+            var Sessions = await sessionRepo.GetAllSessionsWithTrainerAndCategoryAsync(ct : ct);
             if (Sessions == null || !Sessions.Any()) return null;
 
             Sessions = Sessions.OrderByDescending(X => X.StartDate);

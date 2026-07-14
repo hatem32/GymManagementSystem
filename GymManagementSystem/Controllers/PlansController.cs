@@ -4,11 +4,13 @@ using GymManagementSystem.DAL.Repositories.Classes;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.DbContexts;
 using GymManagementSystem.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymManagementSystem.Controllers
 {
+    [Authorize]
     public class PlansController : Controller
     {
         private readonly IPlanService _planService;
@@ -63,12 +65,16 @@ namespace GymManagementSystem.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var result = await _planService.UpdatePlanAsync(id, model , ct);
-            if (result)
+            if (result.Success)
+            {
                 TempData["SuccessMessage"] = "Plan updated successfully.";
-            else
-                TempData["ErrorMessage"] = "Plan Failed To update";
+                return RedirectToAction(nameof(Index));
+            }
+          
+            TempData["ErrorMessage"] = result.Error;
+            return View(model);
 
-            return RedirectToAction(nameof(Index));
+            
         }
 
 
@@ -78,10 +84,10 @@ namespace GymManagementSystem.Controllers
         public async Task<IActionResult> Activate(int id, CancellationToken ct)
         {
             var result = await _planService.ToggleActivationAsync(id, ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Plan status changed";
             else
-                TempData["ErrorMessage"] = "Failed to Toggle Plan Status";
+                TempData["ErrorMessage"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
 

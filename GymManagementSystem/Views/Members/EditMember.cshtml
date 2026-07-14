@@ -1,6 +1,8 @@
 ﻿@using GymManagementSystem.BLL.ViewModels.MemberViewModels
 @model MemberToUpdateViewModel
-
+@{
+    ViewData["Title"] = "Edit Member";
+}
 <div class="container">
     <main role="main" class="pb-3">
 
@@ -11,8 +13,20 @@
                     <div class="card card-details border-0 p-2 shadow">
                         <div class="card-body text-center">
                             <div class="text-center mt-3">
-                                <img src="~/images/@Model.Photo" alt="@Model.Name" class="rounded-circle"
-                                     style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #fff; margin-top: -60px;" />
+                                @if (!string.IsNullOrEmpty(Model.Photo))
+                                {
+                                    <img src="@Url.Action("Picture", "Members", new { id = ViewContext.RouteData.Values["id"] })"
+                                         alt="@Model.Name"
+                                         class="rounded-circle"
+                                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #fff; margin-top: -60px;" />
+                                }
+                                else
+                                {
+                                    <img src="~/images/default-avatar.jpg"
+                                         alt="@Model.Name"
+                                         class="rounded-circle"
+                                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #fff; margin-top: -60px;" />
+                                }
                             </div>
                             <div class="card-body text-center">
                                 <h2 class="mb-1 text-primary-color">@Model.Name</h2>

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using GymManagementSystem.BLL.Common;
+using GymManagementSystem.BLL.Services.AttachmentService;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.MemberViewModels;
 using GymManagementSystem.DAL.Models;
@@ -16,32 +18,50 @@ namespace GymManagementSystem.BLL.Services.Classes
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IAttachmentService _attachmentService;
 
-        public MemberService( IUnitOfWork unitOfWork , IMapper mapper)
+        public MemberService( IUnitOfWork unitOfWork , IMapper mapper , IAttachmentService attachmentService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _attachmentService = attachmentService;
         }
 
-        public async Task<bool> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct = default)
+        public async Task<Result> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct = default)
         {
-            //check email
-            var EmailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Email == model.Email, ct);
-            //check phone
-            var PhoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Phone == model.Phone, ct);
+            var repo = _unitOfWork.GetRepository<Member>();
 
-            //email and phone exists return false
+            if (await repo.AnyAsync(m => m.Email == model.Email, ct))
+                return Result.Fail("A member with this email already exists.");
 
-            if (EmailExists || PhoneExists) return false;
+            if (await repo.AnyAsync(m => m.Phone == model.Phone, ct))
+                return Result.Fail("A member with this phone number already exists.");
 
-            //else return true and add member
+
+            //Upload Photo
+
+            var StoredPhotoName= await _attachmentService.UploadAsync(model.PhotoFile.OpenReadStream(), model.PhotoFile.FileName, "MembersPhoto" , ct);
+           if (String.IsNullOrWhiteSpace(StoredPhotoName))
+                return Result.Validation("Profile photo upload failed (check file type and size).");
+
 
             var member = _mapper.Map<CreateMemberViewModel, Member>(model);
 
-            //var result = await _MemberRepository.AddAsync(member);
-            _unitOfWork.GetRepository<Member>().Add(member); // add local
+            member.Photo = StoredPhotoName;
+
+            repo.Add(member); // add local
             var result = await _unitOfWork.SaveChangesAsync(ct);
-            return result > 0;
+
+            if (result == 0)
+            {
+                if (!string.IsNullOrEmpty(member.Photo))
+                    _attachmentService.Delete(StoredPhotoName, "MembersPhoto");
+
+                return Result.Fail("Failed To Create Member");
+            }
+            else
+
+                return Result.Ok();
 
         }
 
@@ -50,8 +70,8 @@ namespace GymManagementSystem.BLL.Services.Classes
             var members = await _unitOfWork.GetRepository<Member>().GetAllAsync(ct: ct);
             if (!members.Any()) return [];
 
-            var membersViewModels = _mapper.Map<IEnumerable<Member>,IEnumerable<MemberViewModel>>(members);
-            return membersViewModels;
+            return _mapper.Map<IEnumerable<Member>,IEnumerable<MemberViewModel>>(members);
+           ;
         }
 
         public async Task<HealthRecordViewModel?> GetMemberHealthRecordAsync(int MemberId, CancellationToken ct = default)
@@ -91,36 +111,47 @@ namespace GymManagementSystem.BLL.Services.Classes
             return _mapper.Map<Member, MemberToUpdateViewModel>(member);
         }
 
-        public async Task<bool> UpdateMemberDetailsAsync(int id, MemberToUpdateViewModel model, CancellationToken ct = default)
+        public async Task<Result> UpdateMemberDetailsAsync(int id, MemberToUpdateViewModel model, CancellationToken ct = default)
         {
-            var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(id, ct);
-            if (member == null) return false;
+            var repo = _unitOfWork.GetRepository<Member>();
+            var member = await repo.GetByIdAsync(id, ct);
+            if (member is null) return Result.NotFound("Member not found.");
 
-            var EmailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Email == member.Email && x.Id != id);
-            var PhoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Phone == member.Phone && x.Id != id);
-            if (EmailExists || PhoneExists) return false;
+            // Self-exclusion: check if email/phone exists on a DIFFERENT member.
+            if (await repo.AnyAsync(m => m.Email == model.Email && m.Id != id, ct))
+                return Result.Fail("Another member is already using this email.");
+
+            if (await repo.AnyAsync(m => m.Phone == model.Phone && m.Id != id, ct))
+                return Result.Fail("Another member is already using this phone number.");
 
             _mapper.Map(model, member);
-
-           _unitOfWork.GetRepository<Member>().Update(member); // update local
+            member.UpdatedAt = DateTime.Now;
+            repo.Update(member);
             var result = await _unitOfWork.SaveChangesAsync(ct);
-            return result > 0;
+            return result > 0 ? Result.Ok() : Result.Fail("Failed To update Member");
 
 
         }
 
-        public async Task<bool> RemoveMemberAsync(int MemberId, CancellationToken ct = default)
+        public async Task<Result> RemoveMemberAsync(int MemberId, CancellationToken ct = default)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(MemberId, ct);
-            if (member == null) return false;
+            if (member is null) return Result.NotFound("Member Not Found");
 
             var hasFutureBookings = await _unitOfWork.GetRepository<Booking>().AnyAsync(b => b.MemberId == MemberId && b.Session.StartDate > DateTime.Now, ct);
 
-            if (hasFutureBookings) return false;
+            if (hasFutureBookings) return Result.Fail("Cannot delete a member with upcoming sessions.");
 
-           _unitOfWork.GetRepository<Member>().Delete(member); // delete local
+            _unitOfWork.GetRepository<Member>().Delete(member); // delete local
             var result = await _unitOfWork.SaveChangesAsync(ct);
-           return result > 0;
+            if (result > 0)
+            {
+                if (!string.IsNullOrEmpty(member.Photo))
+                    _attachmentService.Delete(member.Photo, "MembersPhoto");
+
+                return Result.Ok();
+            }
+            return Result.Fail("Failed To Delete Member");
         }
     }
 }

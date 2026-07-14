@@ -32,6 +32,11 @@ namespace GymManagementSystem.DAL.Repositories.Classes
             return _Set.AsNoTracking().AnyAsync(Predicate, ct);
         }
 
+        public Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken ct = default)
+        {
+            return predicate is null ? _Set.AsNoTracking().CountAsync(ct) : _Set.AsNoTracking().CountAsync(predicate, ct);
+        }
+
         public void Delete(TEntity entity)
         {
             _Set.Remove(entity);
@@ -44,7 +49,7 @@ namespace GymManagementSystem.DAL.Repositories.Classes
 
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync(bool tracking = false, CancellationToken ct = default)
+        public async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? Predicate, bool tracking = false, CancellationToken ct = default)
         {
             IQueryable<TEntity> query = tracking ? _Set : _Set.AsNoTracking();
             return await query.ToListAsync();

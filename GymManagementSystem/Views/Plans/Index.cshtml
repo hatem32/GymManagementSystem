@@ -1,6 +1,8 @@
 ﻿@using GymManagementSystem.BLL.ViewModels.PlanViewModels
 @model IEnumerable<PlanViewModel>
-﻿
+@{
+    ViewData["Title"] = "Plans";
+}﻿
 
 @if (TempData["SuccessMessage"] != null)
 {

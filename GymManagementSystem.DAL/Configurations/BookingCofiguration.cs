@@ -19,6 +19,14 @@ namespace GymManagementSystem.DAL.Configurations
                 .HasColumnName("BookingDate")
                 .HasDefaultValueSql("GETDATE()");
 
+            builder.HasOne(X => X.Session)
+                   .WithMany(X => X.SessionMembers)
+                   .HasForeignKey(X => X.SessionId);
+
+            builder.HasOne(X => X.Member)
+                   .WithMany(X => X.MemberSessions)
+                   .HasForeignKey(X => X.MemberId);
+
             builder.HasKey(x => new { x.MemberId, x.SessionId });
         }
     }
