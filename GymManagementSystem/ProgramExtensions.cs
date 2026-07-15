@@ -1,4 +1,5 @@
 ﻿using GymManagementSystem.DAL.DataSeeding;
+using GymManagementSystem.DAL.Models;
 using GymManagementSystem.DbContexts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,8 @@ namespace GymManagementSystem.PL
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<GymDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
@@ -24,6 +27,9 @@ namespace GymManagementSystem.PL
 
             var seedPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "Files");
             await GymDataSeeding.SeedAsync(dbContext, seedPath, logger);
+
+
+           await IdentityDataSeeding.SeedAsync(roleManager, userManager, logger);
         }
     }
 }

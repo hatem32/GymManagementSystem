@@ -1,10 +1,12 @@
 ﻿using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.SessionViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace GymManagementSystem.PL.Controllers
 {
+    [Authorize]
     public class SessionsController : Controller
     {
         private readonly ISessionService _sessionService;
@@ -65,11 +67,7 @@ namespace GymManagementSystem.PL.Controllers
             return View(model);
         }
 
-        private async Task PopulateDropdownsAsync()
-        {
-            ViewBag.Trainers = new SelectList(await _sessionService.GetTrainersForDropDownAsync(), "Id", "Name");
-            ViewBag.Categories = new SelectList(await _sessionService.GetCategoriesForDropDownAsync(), "Id", "CategoryName");
-        }
+       
 
         #endregion
 
@@ -82,7 +80,7 @@ namespace GymManagementSystem.PL.Controllers
             var result = await _sessionService.GetSessionToUpdateAsync(id, ct);
             if (result.Success)
             {
-                ViewBag.Trainers = new SelectList(await _sessionService.GetTrainersForDropDownAsync(), "Id", "Name");
+                await PopulateDropdownsAsync();
                 return View(result.Value);
             }
             else
@@ -98,7 +96,7 @@ namespace GymManagementSystem.PL.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Trainers = new SelectList(await _sessionService.GetTrainersForDropDownAsync(), "Id", "Name");
+                await PopulateDropdownsAsync();
                 return View(model);
             }
 
@@ -123,7 +121,7 @@ namespace GymManagementSystem.PL.Controllers
         #region Delete
 
         [HttpGet]
-        public async Task<IActionResult> Delete(int id , CancellationToken ct)
+        public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _sessionService.GetSessionByIdAsync(id);
             if (result.Success)
@@ -138,7 +136,7 @@ namespace GymManagementSystem.PL.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteConfirmed(int id , CancellationToken ct)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken ct)
         {
             var result = await _sessionService.RemoveSessionAsync(id);
             if (result.Success)
@@ -154,5 +152,11 @@ namespace GymManagementSystem.PL.Controllers
         }
 
         #endregion
+
+        private async Task PopulateDropdownsAsync()
+        {
+            ViewBag.Trainers = new SelectList(await _sessionService.GetTrainersForDropDownAsync(), "Id", "Name");
+            ViewBag.Categories = new SelectList(await _sessionService.GetCategoriesForDropDownAsync(), "Id", "CategoryName");
+        }
     }
 }

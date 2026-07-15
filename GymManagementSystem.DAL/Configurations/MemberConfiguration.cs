@@ -17,6 +17,10 @@ namespace GymManagementSystem.DAL.Configurations
                 .HasColumnName("JoinDate")
                 .HasDefaultValueSql("GETDATE()");
 
+            builder.HasOne(M => M.HealthRecord)
+                          .WithOne(HR => HR.Member)
+                          .HasForeignKey<HealthRecord>(M => M.MemberId);
+
             base.Configure(builder);
         }
     }

@@ -1,9 +1,11 @@
 ﻿using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.TrainerViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagementSystem.PL.Controllers
 {
+    [Authorize(Roles = "SuperAdmin")]
     public class TrainersController : Controller
     {
         private readonly ITrainerService _trainerService;
@@ -31,12 +33,12 @@ namespace GymManagementSystem.PL.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var result = await _trainerService.CreateTrainerAsync(model, ct);
-            if (result)
+            if (result.Success)
             {
                 TempData["SuccessMessage"] = "Trainer created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            TempData["ErrorMessage"] = "Trainer Failed create";
+            TempData["ErrorMessage"] = result.Error;
             return View(model);
         }
 
@@ -73,10 +75,10 @@ namespace GymManagementSystem.PL.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var result = await _trainerService.UpdateTrainerDetailsAsync(id, model, ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Trainer updated successfully.";
             else
-                TempData["ErrorMessage"] = "Trainer Failed To update";
+                TempData["ErrorMessage"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
 
@@ -96,10 +98,10 @@ namespace GymManagementSystem.PL.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken ct)
         {
             var result = await _trainerService.RemoveTrainerAsync(id, ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Trainer deleted successfully.";
             else
-                TempData["ErrorMessage"] = "Failed To delete Trainer";
+                TempData["ErrorMessage"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
     }

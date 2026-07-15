@@ -1,6 +1,8 @@
 ﻿@using GymManagementSystem.BLL.ViewModels.TrainerViewModel
 @model IEnumerable<TrainerViewModel>
-
+@{
+    ViewData["Title"] = "Trainers";
+}
 <div class="container">
     @if (TempData["SuccessMessage"] != null)
     {

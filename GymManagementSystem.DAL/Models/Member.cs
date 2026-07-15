@@ -16,7 +16,7 @@ namespace GymManagementSystem.DAL.Models
 
         public HealthRecord HealthRecord { get; set; } = default!;
 
-        public ICollection<MemberShip> MemberShips { get; set; } = default!;
+        public ICollection<MemberShip> MemberPlans { get; set; } = default!;
         public ICollection<Booking> MemberSessions { get; set; } = default!;
 
 

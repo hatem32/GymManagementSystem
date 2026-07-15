@@ -1,4 +1,5 @@
 ﻿using GymManagementSystem.DAL.Models;
+using GymManagementSystem.DAL.Repositories.Classes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,7 @@ namespace GymManagementSystem.DAL.Repositories.Interfaces
         Task<int> SaveChangesAsync(CancellationToken ct = default);
 
         public ISessionRepository SessionRepository { get; }
+        public IMemberShipRepository MemberShipRepository { get; }
+        public IBookingRepository BookingRepository { get; }
     }
 }

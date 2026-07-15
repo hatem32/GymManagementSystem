@@ -1,16 +1,21 @@
-﻿using GymManagementSystem.BLL.Services.Interfaces;
+﻿using GymManagementSystem.BLL.Services.AttachmentService;
+using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.MemberViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagementSystem.PL.Controllers
 {
+    [Authorize(Roles = "SuperAdmin")]
     public class MembersController : Controller
     {
         private readonly IMemberService _memberService;
+        private readonly IAttachmentService _attachmentService;
 
-        public MembersController(IMemberService memberService)
+        public MembersController(IMemberService memberService , IAttachmentService attachmentService)
         {
             _memberService = memberService;
+            _attachmentService = attachmentService;
         }
 
         //Get  BaseUrl/Members/Index
@@ -22,7 +27,19 @@ namespace GymManagementSystem.PL.Controllers
             return View(members);
         }
 
+        #region Show Member Data 
+        public async Task<IActionResult> Picture(int id)
+        {
+            var member = await _memberService.GetMemberDetailsByIdAsync(id);
+            if (member is null || string.IsNullOrEmpty(member.Photo))
+                return NotFound();
 
+
+            var result = _attachmentService.GetFile(member.Photo, "MembersPhoto");
+            if (result is null) return NotFound();
+
+            return File(result.Value.Stream, result.Value.ContentType);
+        }
 
         //Get  BaseUrl/Members/MemberDetails/{id}
         //MemberDetails - Show one member's details
@@ -63,7 +80,7 @@ namespace GymManagementSystem.PL.Controllers
             return View(record);
         }
 
-
+        #endregion
 
 
         #region Create Member
@@ -81,10 +98,10 @@ namespace GymManagementSystem.PL.Controllers
         {
             if(!ModelState.IsValid) return View(nameof(Create) , model);
             var result = await _memberService.CreateMemberAsync(model, ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Member Created Successfully";
             else
-                TempData["ErrorMessage"] = "Failed To Create Member";
+                TempData["ErrorMessage"] = result.Error;
             return RedirectToAction(nameof(Index));
 
         }
@@ -117,10 +134,10 @@ namespace GymManagementSystem.PL.Controllers
         {
             if (!ModelState.IsValid) return View(model);
             var result =await _memberService.UpdateMemberDetailsAsync(id , model , ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Member Updated Successfully";
             else
-                TempData["ErrorMessage"] = "Failed To Update Member";
+                TempData["ErrorMessage"] = result.Error;
 
             return RedirectToAction(nameof(Index));
         }
@@ -148,10 +165,10 @@ namespace GymManagementSystem.PL.Controllers
         public async Task<IActionResult> DeleteConfirmed([FromRoute] int id , CancellationToken ct)
         {
             var result = await _memberService.RemoveMemberAsync(id , ct);
-            if (result)
+            if (result.Success)
                 TempData["SuccessMessage"] = "Member Deleted Successfully";
             else
-                TempData["ErrorMessage"] = "Failed To Delete Member";
+                TempData["ErrorMessage"] = result.Error;
 
             return RedirectToAction(nameof(Index));
         }
